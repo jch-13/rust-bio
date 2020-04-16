@@ -76,8 +76,9 @@ pub fn invert_bwt(bwt: &BWTSlice) -> Vec<u8> {
 /// An occurrence array implementation.
 #[derive(Serialize, Deserialize)]
 pub struct Occ {
-    occ: Vec<Vec<usize>>,
+    occ: Vec<usize>,
     k: u32,
+    m: usize,
 }
 
 impl Occ {
@@ -103,11 +104,11 @@ impl Occ {
         for (i, &c) in bwt.iter().enumerate() {
             curr_occ[c as usize] += 1;
             if i % k as usize == 0 {
-                occ.push(curr_occ.clone());
+                occ.extend_from_slice(&curr_occ);
             }
         }
 
-        Occ { occ, k }
+        Occ { occ, k, m }
     }
 
     /// Get occurrence count of symbol a in BWT[..r+1].
@@ -137,7 +138,7 @@ impl Occ {
 
         // self.k is our sampling rate, so find our last sampled checkpoint
         let i = r / self.k as usize;
-        let checkpoint = self.occ[i][a as usize];
+        let checkpoint = self.occ[i * self.m + a as usize];
 
         // find the portion of the BWT past the checkpoint which we need to count
         let start = (i * self.k as usize) + 1;
@@ -211,7 +212,7 @@ mod tests {
         let bwt = vec![1u8, 3u8, 3u8, 1u8, 2u8, 0u8];
         let alphabet = Alphabet::new(&[0u8, 1u8, 2u8, 3u8]);
         let occ = Occ::new(&bwt, 3, &alphabet);
-        assert_eq!(occ.occ, [[0, 1, 0, 0], [0, 2, 0, 2]]);
+        assert_eq!(occ.occ, [0, 1, 0, 0, 0, 2, 0, 2]);
         assert_eq!(occ.get(&bwt, 4, 2u8), 1);
         assert_eq!(occ.get(&bwt, 4, 3u8), 2);
     }
