@@ -118,18 +118,9 @@ impl Occ {
         //
         // Retrieving byte match counts in this function is critical to the performance of FM Index.
         //
-        // The below manual count code is roughly equivalent to:
-        // ```
-        // let count = bwt[(i * self.k) + 1..r + 1].iter().filter(|&&c| c == a).count();
-        // self.occ[i][a as usize] + count
-        // ```
-        //
-        // But there are a couple of reasons to do this manually:
-        // 1) As of 2016, versions of rustc/LLVM vectorize this manual loop more reliably
-        //    than the iterator adapter version.
-        // 2) Manually accumulating the byte match count in a single chunk can allows
-        //    us to use a `u32` for that count, which has faster arithmetic on common arches.
-        //    This does necessitate storing `k` as a u32.
+        // Manually accumulating the byte match count in a single chunk can allows
+        // us to use a `u32` for that count, which has faster arithmetic on common arches.
+        // This does necessitate storing `k` as a u32.
         //
         // See the conversation in these issues for some of the history here:
         //
@@ -148,7 +139,7 @@ impl Occ {
         let count = bytecount::count(&bwt[start..end], a);
 
         // return the sampled checkpoint for this character + the manual count we just did
-        checkpoint + (count as usize)
+        checkpoint + count
     }
 }
 
